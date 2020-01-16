@@ -31,19 +31,19 @@ class Dumper {
 	}
 	
 	public static function dumpJson(...$objects) {
-		static::dumpInternal($objects, ['static', 'json']);
+		static::dumpInternal($objects, ['Dumper', 'json']);
 	}
 	
 	public static function dumpVar(...$objects) {
-		static::dumpInternal($objects, ['static', 'vars']);
+		static::dumpInternal($objects, ['Dumper', 'vars']);
 	}
 	
 	public static function dumpExport(...$objects) {
-		static::dumpInternal($objects, ['static', 'export']);
+		static::dumpInternal($objects, ['Dumper', 'export']);
 	}
 	
 	public static function dumpPrint(...$objects) {
-		static::dumpInternal($objects, ['static', 'print']);
+		static::dumpInternal($objects, ['Dumper', 'print']);
 	}
 	
 	public static function dumpSerialize(...$objects) {
@@ -52,7 +52,7 @@ class Dumper {
 	
 	public static function log(...$objects) {
 		$header = static::getHeader();
-		$content = '# ' . $header . PHP_EOL . implode(PHP_EOL . PHP_EOL, array_map(['static', 'json'], $objects)) . PHP_EOL;
+		$content = '# ' . $header . PHP_EOL . implode(PHP_EOL . PHP_EOL, array_map(['Dumper', 'json'], $objects)) . PHP_EOL;
 		$path = substr(static::$logFile, 0, 1) === DIRECTORY_SEPARATOR ? static::$logFile : $_SERVER['DOCUMENT_ROOT'] . DIRECTORY_SEPARATOR . static::$logFile;
 		file_put_contents($path, $content, FILE_APPEND | LOCK_EX);
 	}
@@ -71,6 +71,6 @@ class Dumper {
 		$bt = debug_backtrace()[1];
 		$time = (new DateTime)->format('d.m.y h:i:s:u');
 		$fileWithLine = substr($bt['file'], strlen($_SERVER['DOCUMENT_ROOT']) + 1) . ':' . $bt['line'];
-		return "$time in $fileWithLine";
+		return $time . ' in ' . $fileWithLine;
 	}
 }
