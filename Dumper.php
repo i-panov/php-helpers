@@ -52,14 +52,14 @@ class Dumper {
 	
 	public static function log(...$objects) {
 		$header = static::getHeader();
-		$content = '# ' . $header . PHP_EOL . implode(PHP_EOL . PHP_EOL, array_map(['Dumper', 'json'], $objects)) . PHP_EOL;
+		$content = "# $header" . PHP_EOL . implode(PHP_EOL . PHP_EOL, array_map(['Dumper', 'json'], $objects)) . PHP_EOL;
 		$path = substr(static::$logFile, 0, 1) === DIRECTORY_SEPARATOR ? static::$logFile : $_SERVER['DOCUMENT_ROOT'] . DIRECTORY_SEPARATOR . static::$logFile;
 		file_put_contents($path, $content, FILE_APPEND | LOCK_EX);
 	}
 	
 	private static function dumpInternal($objects, $serializer) {
 		$header = static::getHeader();
-		echo '<table class="dump"><tr><th>DUMP</th></tr>';
+		echo "<table class='dump'><tr><th>DUMP ($header)</th></tr>";
 		
 		foreach ($objects as $obj)
 			echo '<tr><td><pre>' . $serializer($obj) . '</pre></td></tr>';
@@ -69,8 +69,8 @@ class Dumper {
 	
 	private static function getHeader() {
 		$bt = debug_backtrace()[1];
-		$time = (new DateTime)->format('d.m.y h:i:s:u');
+		$time = (new DateTime)->format('d.m.y H:i:s:u');
 		$fileWithLine = substr($bt['file'], strlen($_SERVER['DOCUMENT_ROOT']) + 1) . ':' . $bt['line'];
-		return $time . ' in ' . $fileWithLine;
+		return "$time in $fileWithLine";
 	}
 }
