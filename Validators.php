@@ -3,8 +3,17 @@
 abstract class Validator {
 	public static $buildInValidators = [
 		'required' => RequiredValidator::class,
-		'email' => EmailValidator::class,
-		'phone' => PhoneValidator::class,
+		'boolean' => BooleanValidator::class,
+		'string' => StringValidator::class,
+		'number' => NumberValidator::class,
+		'integer' => IntegerValidator::class,
+		'float' => FloatValidator::class,
+		'match' => MatchValidator::class,
+		'phone' => PhoneValidator::class,	
+		'filter_var' => FilterVarValidator::class,
+		'email' => EmailValidator::class,			
+		'ip' => IPValidator::class,			
+		'url' => UrlValidator::class,			
 		'filter' => FilterValidator::class,
 		'trim' => TrimValidator::class,
 	];
@@ -54,6 +63,8 @@ abstract class Validator {
 				$parsedRules[] = $rule;
 		}
 		
+		$data = array_merge(array_flip(array_unique(array_column($parsedRules, 0))), $data);
+		
 		foreach ($data as $key => &$value) {
 			foreach ($parsedRules as $rule) {
 				$ruleKey = $rule[0]; 
@@ -89,18 +100,88 @@ class RequiredValidator extends Validator {
 	}
 }
 
-class PhoneValidator extends Validator {
-	public const PATTERN = '/(\+7|8)[ ]?(\(\d{3,6}\)|\d{3,6})[ ]?\d{1,10}\-?\d{1,10}/';
-	
+class BooleanValidator extends Validator {
 	public function test() {
-		return preg_match(self::PATTERN, $this->value, $matches) > 0;
+		$trueValue = $this->params['trueValue'] ?? true;
+		$falseValue = $this->params['falseValue'] ?? false;
+		return $this->value == $trueValue || $this->value == $falseValue;
 	}
 }
 
-class EmailValidator extends Validator {
+class StringValidator extends Validator {
+	public $messageTemplate = 'Поле ":key" имело не верную длину';
+	
 	public function test() {
-		return !filter_var($this->value, FILTER_VALIDATE_EMAIL);
+		$min = $this->params['min'] ?? 0;
+		$max = $this->params['max'] ?? $min;
+		$length = $this->params['length'] ?? null;
+		
+		if (!is_string($this->value))
+			return false;
+		
+		$valueLength = strlen($this->value);
+		
+		if (!is_null($length))
+			return $valueLength == $length;
+		
+		return $valueLength >= $min && $valueLength <= $max;
 	}
+}
+
+class NumberValidator extends Validator {
+	public $messageTemplate = 'Поле ":key" имело неверное значение';
+	protected $typeTester = 'is_numeric';
+	
+	public function test() {
+		$min = $this->params['min'] ?? 0;
+		$max = $this->params['max'] ?? $min;		
+		return $this->typeTester($this->value) && $this->value >= $min && $this->value <= $max;
+	}
+}
+
+class IntegerValidator extends NumberValidator {
+	protected $typeTester = 'is_int';
+}
+
+class FloatValidator extends NumberValidator {
+	protected $typeTester = 'is_float';
+}
+
+class MatchValidator extends Validator {
+	protected $defaultPattern;
+	
+	public function test() {
+		$pattern = $this->params['pattern'] ?? $this->defaultPattern ?? null;
+		$not = $this->params['not'] ?? false;
+		
+		if (!$pattern)
+			throw new InvalidArgumentException('pattern is empty');
+		
+		return preg_match($pattern, $this->value, $matches) > 0;
+	}
+}
+
+class PhoneValidator extends MatchValidator {
+	protected $defaultPattern = '/(\+7|8)[ ]?(\(\d{3,6}\)|\d{3,6})[ ]?\d{1,10}\-?\d{1,10}/';
+}
+
+class FilterVarValidator extends Validator {
+	public function test() {
+		$flags = $this->params['flags'] ?? FILTER_DEFAULT;
+		return filter_var($this->value, $flags) !== false;
+	}
+}
+
+class EmailValidator extends FilterVarValidator {
+	public $params = ['flags' => FILTER_VALIDATE_EMAIL];
+}
+
+class IPValidator extends FilterVarValidator {
+	public $params = ['flags' => FILTER_VALIDATE_IP];
+}
+
+class UrlValidator extends FilterVarValidator {
+	public $params = ['flags' => FILTER_VALIDATE_URL];
 }
 
 class FilterValidator extends Validator {
