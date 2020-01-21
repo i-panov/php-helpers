@@ -68,7 +68,7 @@ class Dumper {
 	}
 	
 	private static function getHeader() {
-		$bt = debug_backtrace()[1];
+		$bt = debug_backtrace()[2];
 		$time = (new DateTime)->format('d.m.y H:i:s:u');
 		$fileWithLine = substr($bt['file'], strlen($_SERVER['DOCUMENT_ROOT']) + 1) . ':' . $bt['line'];
 		return "$time in $fileWithLine";
