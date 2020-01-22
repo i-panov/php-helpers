@@ -21,72 +21,72 @@ class CString implements Iterator, ArrayAccess {
 	public function __toString() {
 		return $this->_value;
 	}
-	
+
 	//---------------------------------------------------
-	
+
 	private $_iteratorPosition = 0, $_iteratorCurrent = false;
-	
+
 	public function rewind() {
-        $this->_iteratorPosition = 0;
+		$this->_iteratorPosition = 0;
 		$this->_iteratorCurrent = false;
-    }
+	}
 
-    public function current() {
-        return $this->_iteratorCurrent;
-    }
+	public function current() {
+		return $this->_iteratorCurrent;
+	}
 
-    public function key() {
-        return $this->position;
-    }
+	public function key() {
+		return $this->position;
+	}
 
-    public function next() {
-        $this->_iteratorPosition++;
+	public function next() {
+		$this->_iteratorPosition++;
 		$this->_iteratorCurrent = substr($this->_value, $this->_iteratorPosition, 1);
-    }
+	}
 
-    public function valid() {
+	public function valid() {
 		return $this->_iteratorPosition >= 0 && $this->_iteratorPosition < strlen($this->_value);
-    }
-	
+	}
+
 	//---------------------------------------------------
-	
+
 	public function offsetSet($offset, $value) {
 		if (is_null($offset))
 			$this->_value .= $value;
 		else
 			$this->_value = substr_replace($this->_value, $value, $offset, 0);
-    }
+	}
 
-    public function offsetExists($offset) {
-        return $offset >= 0 && $offset < strlen($this->_value);
-    }
+	public function offsetExists($offset) {
+		return $offset >= 0 && $offset < strlen($this->_value);
+	}
 
-    public function offsetUnset($offset) {
+	public function offsetUnset($offset) {
 		$this->_value = substr_replace($this->_value, '', $offset, 1);
-    }
+	}
 
-    public function offsetGet($offset) {
+	public function offsetGet($offset) {
 		return $this->offsetExists($offset) ? substr($this->_value, $offset, 1) : null;
-    }
-	
+	}
+
 	//---------------------------------------------------
-	
+
 	public function length() {
 		return $this->_length;
 	}
-	
+
 	public function isEmpty() {
 		return $this->_value === '';
 	}
-	
+
 	public function isWhiteSpace() {
 		return trim($this->_value) === '';
 	}
-	
+
 	public function startsWith($search) {
 		return substr($this->_value, 0, strlen($search)) == $search;
 	}
-	
+
 	public function endsWith($search) {
 		return substr($this->_value, $this->_length - strlen($search)) == $search;
 	}
