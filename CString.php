@@ -21,15 +21,19 @@ class CString {
 	}
 	
 	public function chunks($length = 1) {
-		return str_split($this->_value, $length);
+		return array_map(['static', 'of'], str_split($this->_value, $length));
 	}
 	
-	public function indexOf($search, $offset = 0) {
-		return strpos($this->_value, $search, $offset);
+	public function indexOf($search, $offset = 0, $ignoreCase = false) {
+		return $ignoreCase ? stripos($this->_value, $search, $offset) : strpos($this->_value, $search, $offset);
+	}
+	
+	public function lastIndexOf($search, $offset = 0, $ignoreCase = false) {
+		return $ignoreCase ? strripos($this->_value, $search, $offset) : strrpos($this->_value, $search, $offset);
 	}
 	
 	public function startsWith($search) {
-		return substr($this->_value, strlen($search)) == $search;
+		return substr($this->_value, 0, strlen($search)) == $search;
 	}
 	
 	public function endsWith($search) {
@@ -58,7 +62,7 @@ class CString {
 			$result = str_replace($delimiters, $delimiters[0], $this->_value);
 			$result = explode($delimiters[0], $result, $limit);
 		} else
-			throw new InvalidArgumentException('delimiters is empty'):
+			throw new InvalidArgumentException('delimiters is empty');
 		
 		return new self($result);
 	}
@@ -82,6 +86,14 @@ class CString {
 	
 	public function replace($search, $replace, &$count = false) {
 		return new self(str_replace($search, $replace, $this->_value, $count));
+	}
+	
+	public function format(...$params) {
+	    return new self(sprintf($this->_value, ...$params));
+	}
+	
+	public function print() {
+	    echo $this->_value;
 	}
 }
 
