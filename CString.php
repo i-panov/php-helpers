@@ -36,7 +36,7 @@ class CString implements Iterator, ArrayAccess {
 	}
 
 	public function key() {
-		return $this->position;
+		return $this->_iteratorPosition;
 	}
 
 	public function next() {
