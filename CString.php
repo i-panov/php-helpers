@@ -45,7 +45,7 @@ class CString implements Iterator, ArrayAccess {
 	}
 
 	public function valid() {
-		return $this->_iteratorPosition >= 0 && $this->_iteratorPosition < strlen($this->_value);
+		return $this->_iteratorPosition >= 0 && $this->_iteratorPosition < $this->_length;
 	}
 
 	//---------------------------------------------------
@@ -58,7 +58,7 @@ class CString implements Iterator, ArrayAccess {
 	}
 
 	public function offsetExists($offset) {
-		return $offset >= 0 && $offset < strlen($this->_value);
+		return $offset >= 0 && $offset < $this->_length;
 	}
 
 	public function offsetUnset($offset) {
