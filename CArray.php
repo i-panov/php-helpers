@@ -80,23 +80,39 @@ class CArray implements Iterator, ArrayAccess {
 	}
 	
 	public function set($path, $value) {
-		$pathParts = $this->parsePath($path);
-		$valueToSet = &$this->_data;
+		return $this->setMany([$path => $value]);
+	}
+	
+	public function setMany($map) {
+		foreach ($map as $path => $value) {
+			$pathParts = $this->parsePath($path);
+			$valueToSet = &$this->_data;
+			
+			foreach ($pathParts as $key)
+				if (!(isset($valueToSet[$key]) && array_key_exists($key, $valueToSet)))
+					throw new InvalidArgumentException("unknown key \"$key\" in path \"$path\"");
+				else
+					$valueToSet = &$valueToSet[$key];
+			
+			$valueToSet = $value;
+		}
 		
-		foreach ($pathParts as $key)
-			if (!(isset($valueToSet[$key]) && array_key_exists($key, $valueToSet)))
-				throw new InvalidArgumentException("unknown key \"$key\" in path \"$path\"");
-			else
-				$valueToSet = &$valueToSet[$key];
-		
-		$valueToSet = $value;
 		return $this;
 	}
 
 	//---------------------------------------------------
 
-	public function count() {
-		return $this->_count;
+	public function count($callback = null, $inverse = false) {
+		if (!$callback)
+			return $this->_count;
+		
+		$result = 0; $index = 0;
+		
+		foreach ($this->_data as $key => $value)
+			if ($this->inverseIfNeed($callback($value, $key, $index++), $inverse))
+				$result++;
+		
+		return $result;
 	}
 
 	public function isEmpty() {
@@ -109,6 +125,68 @@ class CArray implements Iterator, ArrayAccess {
 	
 	public function containsKey($key) {
 		return isset($this->_data[$key]) || array_key_exists($key, $this->_data);
+	}
+	
+	public function firstKey() {
+		if (function_exists('array_key_first'))		
+			return array_key_first($this->_data);
+		
+		foreach ($this->_data as $key => $value)
+			return $key;
+		
+		return null;
+	}
+	
+	public function lastKey() {
+		if (function_exists('array_key_last'))		
+			return array_key_last($this->_data);
+		
+		if (empty($this->_data))
+			return null;
+		
+		end($this->_data);
+		$result = key($this->_data);
+		reset($this->_data);
+		return $result;
+	}
+	
+	public function first() {
+		foreach ($this->_data as $key => $value)
+			return $key;
+		
+		return null;
+	}
+	
+	public function last() {
+		$result = end($this->_data);
+		reset($this->_data);
+		return $result;
+	}
+	
+	public function search($callbackOrValue, $inverseOrStrict = false) {
+		if (!is_callable($callbackOrValue))
+			return array_search($callbackOrValue, $this->_data, $inverseOrStrict);
+		
+		$index = 0;
+		
+		foreach ($this->_data as $key => $value)
+			if ($this->inverseIfNeed($callbackOrValue($value, $key, $index++), $inverseOrStrict))
+				return $key;
+		
+		return false;
+	}
+	
+	public function searchAll($callbackOrValue, $inverseOrStrict = false) {
+		if (!is_callable($callbackOrValue))
+			return array_keys($this->_data, $callbackOrValue, $inverseOrStrict);
+		
+		$result = []; $index = 0;
+		
+		foreach ($this->_data as $key => $value)
+			if ($this->inverseIfNeed($callbackOrValue($value, $key, $index++), $inverseOrStrict))
+				$result[] = $key;
+		
+		return new self($result);
 	}
 	
 	public function all($callback, $inverse = false) {
@@ -133,12 +211,27 @@ class CArray implements Iterator, ArrayAccess {
 	
 	//---------------------------------------------------
 	
-	public function sum() {
-		return array_sum($this->_data);
+	public function min() {
+		return min($this->_data);
 	}
 	
-	public function product() {
-		return array_product($this->_data);
+	public function max() {
+		return max($this->_data);
+	}
+	
+	public function sum($strict = false) {
+		$data = $strict ? array_filter($this->_data, 'is_numeric') : $this->_data;
+		return array_sum($data);
+	}
+	
+	public function product($strict = false) {
+		$data = $strict ? array_filter($this->_data, 'is_numeric') : $this->_data;
+		return array_product($data);
+	}
+	
+	public function average($strict = false) {
+		$data = $strict ? array_filter($this->_data, 'is_numeric') : $this->_data;
+		return array_sum($data) / count($data);
 	}
 	
 	public function reduce($callback, $init = null) {
@@ -152,6 +245,22 @@ class CArray implements Iterator, ArrayAccess {
 	}
 	
 	//---------------------------------------------------
+	
+	public function keys() {
+		return new self(array_keys($this->_data));
+	}
+	
+	public function values() {
+		return new self(array_values($this->_data));
+	}
+	
+	public function reverse($preserveKeys = false) {
+		return new self(array_reverse($this->_data, $preserveKeys));
+	}
+	
+	public function flip() {
+		return new self(array_flip($this->_data));
+	}
 	
 	public function slice($offset = 0, $length = null, $preserveKeys = true) {
 		return new self(array_slice($this->_data, $offset, $length, $preserveKeys));
