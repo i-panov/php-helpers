@@ -74,36 +74,45 @@ class CArray implements Iterator, ArrayAccess {
 	}
 
 	public function isEmpty() {
-		return $this->_data === [];
+		return empty($this->_data);
 	}
 	
 	//---------------------------------------------------
 	
-	public function push(...$items) {
-		$this->_count = array_push(...$this->_data);
+	public function push($items) {
+		$this->_count = array_push($this->_data);
 		return $this;
 	}
 	
-	public function pushFront(...$items) {
-		$this->_count = array_unshift(...$this->_data);
+	public function pushFront($items) {
+		$this->_count = array_unshift($this->_data);
 		return $this;
 	}
 	
 	public function pop() {
+		if ($this->_count <= 0)
+			throw new UnderflowException('array is empty');
+		
 		$this->_count--;
 		return array_pop($this->_data);
 	}
 	
 	public function popFront() {
+		if ($this->_count <= 0)
+			throw new UnderflowException('array is empty');
+		
 		$this->_count--;
 		return array_shift($this->_data);
 	}
 	
 	//---------------------------------------------------
 	
-	public function filter($callback, $inverse = false) {
+	public function filter($callback = null, $inverse = false) {
 		$result = [];
 		$index = 0;
+		
+		if (!$callback)
+			$callback = function($value) { return !empty($value); };
 		
 		foreach ($this->_data as $key => $value) {
 			$callbackResult = $callback($value, $key, $index++);
