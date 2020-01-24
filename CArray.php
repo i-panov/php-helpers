@@ -85,6 +85,8 @@ class CArray implements Iterator, ArrayAccess {
 		return isset($this->_data[$key]) || array_key_exists($key, $this->_data);
 	}
 	
+	//---------------------------------------------------
+	
 	public function sum() {
 		return array_sum($this->_data);
 	}
@@ -93,67 +95,21 @@ class CArray implements Iterator, ArrayAccess {
 		return array_product($this->_data);
 	}
 	
-	//---------------------------------------------------
-	
-	public function removeAll($callback, $inverse = false) {
-		$removedKeys = [];
+	public function reduce($callback, $init = null) {
+		$acc = $init;
 		$index = 0;
 		
-		foreach ($this->_data as $key => $value) {
-			$callbackResult = $callback($value, $key, $index++);
-			
-			if ($inverse)
-				$callbackResult = !$callbackResult;
-			
-			if ($callbackResult)
-				$removedKeys[] = $key;
-		}
+		foreach ($this->_data as $key => $value)
+			$acc = $callback($acc, $value, $key, $index++, $this->_data);
 		
-		return new self(array_diff($this->_data, array_flip($removedKeys)));
-	}
-	
-	public function remove($value, $strict) {
-		if (($key = array_search($value, $this->_data, $strict)) !== false) {
-			unset($this->_data[$key]);
-			return true;
-		}
-		
-		return false;
-	}
-	
-	public function removeKey($key) {
-		if (!$this->containsKey($key))
-			return false;
-		
-		unset($this->_data[$key]);
-		return true;
-	}
-	
-	public function push($items) {
-		return $this->_count = array_push($this->_data);
-	}
-	
-	public function pushFront($items) {
-		return $this->_count = array_unshift($this->_data);
-	}
-	
-	public function pop() {
-		if ($this->_count <= 0)
-			throw new UnderflowException('array is empty');
-		
-		$this->_count--;
-		return array_pop($this->_data);
-	}
-	
-	public function popFront() {
-		if ($this->_count <= 0)
-			throw new UnderflowException('array is empty');
-		
-		$this->_count--;
-		return array_shift($this->_data);
+		return $acc;
 	}
 	
 	//---------------------------------------------------
+	
+	public function slice($offset = 0, $length = null, $preserveKeys = true) {
+		return new self(array_slice($this->_data, $offset, $length, $preserveKeys));
+	}
 	
 	public function filter($callback = null, $inverse = false) {
 		$result = [];
@@ -179,20 +135,83 @@ class CArray implements Iterator, ArrayAccess {
 		$result = [];
 		$index = 0;
 		
-		foreach ($this->_data as $key => $value)
-			$result[] = $callback($value, $key, $index++);
+		foreach ($this->_data as $key => $value) {
+			$callbackResult = $callback($value, $key, $index++, $newKey); // $newKey by ref &
 			
+			if (empty($newKey))
+				$result[] = $callbackResult;
+			else
+				$result[$newKey] = $callbackResult;
+		}
+		
 		return new self($result);
 	}
 	
-	public function reduce($callback, $init = null) {
-		$acc = $init;
+	//---------------------------------------------------
+	
+	public function removeAll($callback, $inverse = false) {
+		$removedKeys = [];
 		$index = 0;
 		
-		foreach ($this->_data as $key => $value)
-			$acc = $callback($acc, $value, $key, $index++, $this->_data);
+		foreach ($this->_data as $key => $value) {
+			$callbackResult = $callback($value, $key, $index++);
+			
+			if ($inverse)
+				$callbackResult = !$callbackResult;
+			
+			if ($callbackResult)
+				$removedKeys[] = $key;
+		}
 		
-		return $acc;
+		foreach ($removedKeys as $key) {
+			unset($this->_data[$key]);
+			$this->_count--;
+		}			
+		
+		return $this;
+	}
+	
+	public function remove($value, $strict) {
+		if (($key = array_search($value, $this->_data, $strict)) !== false) {
+			unset($this->_data[$key]);
+			$this->_count--;
+			return true;
+		}
+		
+		return false;
+	}
+	
+	public function removeKey($key) {
+		if (!$this->containsKey($key))
+			return false;
+		
+		unset($this->_data[$key]);
+		$this->_count--;
+		return true;
+	}
+	
+	public function push($items) {
+		return $this->_count = array_push($this->_data);
+	}
+	
+	public function pushFront($items) {
+		return $this->_count = array_unshift($this->_data);
+	}
+	
+	public function pop() {
+		if ($this->_count <= 0)
+			throw new UnderflowException('array is empty');
+		
+		$this->_count--;
+		return array_pop($this->_data);
+	}
+	
+	public function popFront() {
+		if ($this->_count <= 0)
+			throw new UnderflowException('array is empty');
+		
+		$this->_count--;
+		return array_shift($this->_data);
 	}
 }
 
