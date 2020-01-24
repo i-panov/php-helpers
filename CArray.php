@@ -77,16 +77,64 @@ class CArray implements Iterator, ArrayAccess {
 		return empty($this->_data);
 	}
 	
+	public function contains($value, $strict = false) {
+		return in_array($value, $this->_data, $strict);
+	}
+	
+	public function containsKey($key) {
+		return isset($this->_data[$key]) || array_key_exists($key, $this->_data);
+	}
+	
+	public function sum() {
+		return array_sum($this->_data);
+	}
+	
+	public function product() {
+		return array_product($this->_data);
+	}
+	
 	//---------------------------------------------------
 	
+	public function removeAll($callback, $inverse = false) {
+		$removedKeys = [];
+		$index = 0;
+		
+		foreach ($this->_data as $key => $value) {
+			$callbackResult = $callback($value, $key, $index++);
+			
+			if ($inverse)
+				$callbackResult = !$callbackResult;
+			
+			if ($callbackResult)
+				$removedKeys[] = $key;
+		}
+		
+		return new self(array_diff($this->_data, array_flip($removedKeys)));
+	}
+	
+	public function remove($value, $strict) {
+		if (($key = array_search($value, $this->_data, $strict)) !== false) {
+			unset($this->_data[$key]);
+			return true;
+		}
+		
+		return false;
+	}
+	
+	public function removeKey($key) {
+		if (!$this->containsKey($key))
+			return false;
+		
+		unset($this->_data[$key]);
+		return true;
+	}
+	
 	public function push($items) {
-		$this->_count = array_push($this->_data);
-		return $this;
+		return $this->_count = array_push($this->_data);
 	}
 	
 	public function pushFront($items) {
-		$this->_count = array_unshift($this->_data);
-		return $this;
+		return $this->_count = array_unshift($this->_data);
 	}
 	
 	public function pop() {
