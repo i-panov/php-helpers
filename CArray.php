@@ -1,7 +1,105 @@
 <?php
 
-class CArray {
+class CArray implements Iterator, ArrayAccess {
 	private $_data, $_count;
+	
+	public function __construct($data) {
+		if (is_array($data))
+			$this->_data = $data;
+		elseif (is_iterable($data))
+			$this->_data = iterator_to_array($data);
+		else
+			throw new InvalidArgumentException('data has invalid type');
+		
+		$this->_count = count($this->_data);
+	}
+	
+	public static function of($data) {
+		return new static($data);
+	}
+	
+	public function toArray() {
+		return $this->_data;
+	}
+	
+	//---------------------------------------------------
+
+	private $_iteratorPosition = 0;
+
+	public function rewind() {
+		$this->_iteratorPosition = 0;
+	}
+
+	public function current() {
+		return $this->_data[$this->_iteratorPosition] ?? false;
+	}
+
+	public function key() {
+		return $this->_iteratorPosition;
+	}
+
+	public function next() {
+		$this->_iteratorPosition++;
+	}
+
+	public function valid() {
+		return $this->_iteratorPosition >= 0 && $this->_iteratorPosition < $this->_count;
+	}
+
+	//---------------------------------------------------
+
+	public function offsetSet($offset, $value) {
+		if (is_null($offset))
+			$this->_data[] = $value;
+		else
+			$this->_data[$offset] = $value;
+	}
+
+	public function offsetExists($offset) {
+		return $offset >= 0 && $offset < $this->_count;
+	}
+
+	public function offsetUnset($offset) {
+		unset($this->_data[$offset]);
+	}
+
+	public function offsetGet($offset) {
+		return $this->offsetExists($offset) ? $this->_data[$offset] : null;
+	}
+
+	//---------------------------------------------------
+
+	public function count() {
+		return $this->_count;
+	}
+
+	public function isEmpty() {
+		return $this->_data === [];
+	}
+	
+	//---------------------------------------------------
+	
+	public function push(...$items) {
+		$this->_count = array_push(...$this->_data);
+		return $this;
+	}
+	
+	public function pushFront(...$items) {
+		$this->_count = array_unshift(...$this->_data);
+		return $this;
+	}
+	
+	public function pop() {
+		$this->_count--;
+		return array_pop($this->_data);
+	}
+	
+	public function popFront() {
+		$this->_count--;
+		return array_shift($this->_data);
+	}
+	
+	//---------------------------------------------------
 	
 	public function filter($callback, $inverse = false) {
 		$result = [];
@@ -39,24 +137,8 @@ class CArray {
 		
 		return $acc;
 	}
-	
-	public function push(...$items) {
-		$this->_count = array_push(...$this->_data);
-		return $this->_count;
-	}
-	
-	public function pushFront(...$items) {
-		$this->_count = array_unshift(...$this->_data);
-		return $this->_count;
-	}
-	
-	public function pop() {
-		$result = array_pop($this->_data);
-		return ++$this->_count;
-	}
-	
-	public function popFront() {
-		$result = array_shift($this->_data);
-		return ++$this->_count;
-	}
+}
+
+function arr($data) {
+	return new CArray($data);
 }
