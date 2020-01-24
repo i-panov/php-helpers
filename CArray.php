@@ -66,6 +66,32 @@ class CArray implements Iterator, ArrayAccess {
 	public function offsetGet($offset) {
 		return $this->offsetExists($offset) ? $this->_data[$offset] : null;
 	}
+	
+	//---------------------------------------------------
+	
+	public function get($path) {
+		$pathParts = $this->parsePath($path);
+		$result = $this->_data;
+		
+		foreach ($pathParts as $key)
+			$result = $result[$key];
+			
+		return $result;
+	}
+	
+	public function set($path, $value) {
+		$pathParts = $this->parsePath($path);
+		$valueToSet = &$this->_data;
+		
+		foreach ($pathParts as $key)
+			if (!(isset($valueToSet[$key]) && array_key_exists($key, $valueToSet)))
+				throw new InvalidArgumentException("unknown key \"$key\" in path \"$path\"");
+			else
+				$valueToSet = &$valueToSet[$key];
+		
+		$valueToSet = $value;
+		return $this;
+	}
 
 	//---------------------------------------------------
 
@@ -123,30 +149,6 @@ class CArray implements Iterator, ArrayAccess {
 			$acc = $callback($acc, $value, $key, $index++, $this->_data);
 		
 		return $acc;
-	}
-	
-	public function get($path) {
-		$pathParts = $this->parsePath($path);
-		$result = $this->_data;
-		
-		foreach ($pathParts as $key)
-			$result = $result[$key];
-			
-		return $result;
-	}
-	
-	public function set($path, $value) {
-		$pathParts = $this->parsePath($path);
-		$valueToSet = &$this->_data;
-		
-		foreach ($pathParts as $key)
-			if (!(isset($valueToSet[$key]) && array_key_exists($key, $valueToSet)))
-				throw new InvalidArgumentException("unknown key \"$key\" in path \"$path\"");
-			else
-				$valueToSet = &$valueToSet[$key];
-		
-		$valueToSet = $value;
-		return $this;
 	}
 	
 	//---------------------------------------------------
