@@ -85,6 +85,26 @@ class CArray implements Iterator, ArrayAccess {
 		return isset($this->_data[$key]) || array_key_exists($key, $this->_data);
 	}
 	
+	public function all($callback, $inverse = false) {
+		$index = 0;
+		
+		foreach ($this->_data as $key => $value)
+			if (!$this->inverseIfNeed($callback($value, $key, $index++), $inverse))
+				return false;
+		
+		return true;
+	}
+	
+	public function any($callback, $inverse = false) {
+		$index = 0;
+		
+		foreach ($this->_data as $key => $value)
+			if ($this->inverseIfNeed($callback($value, $key, $index++), $inverse))
+				return true;
+		
+		return false;
+	}
+	
 	//---------------------------------------------------
 	
 	public function sum() {
@@ -105,6 +125,30 @@ class CArray implements Iterator, ArrayAccess {
 		return $acc;
 	}
 	
+	public function get($path) {
+		$pathParts = $this->parsePath($path);
+		$result = $this->_data;
+		
+		foreach ($pathParts as $key)
+			$result = $result[$key];
+			
+		return $result;
+	}
+	
+	public function set($path, $value) {
+		$pathParts = $this->parsePath($path);
+		$valueToSet = &$this->_data;
+		
+		foreach ($pathParts as $key)
+			if (!(isset($valueToSet[$key]) && array_key_exists($key, $valueToSet)))
+				throw new InvalidArgumentException("unknown key \"$key\" in path \"$path\"");
+			else
+				$valueToSet = &$valueToSet[$key];
+		
+		$valueToSet = $value;
+		return $this;
+	}
+	
 	//---------------------------------------------------
 	
 	public function slice($offset = 0, $length = null, $preserveKeys = true) {
@@ -118,14 +162,26 @@ class CArray implements Iterator, ArrayAccess {
 		if (!$callback)
 			$callback = function($value) { return !empty($value); };
 		
-		foreach ($this->_data as $key => $value) {
-			$callbackResult = $callback($value, $key, $index++);
-			
-			if ($inverse)
-				$callbackResult = !$callbackResult;
-			
-			if ($callbackResult)
+		foreach ($this->_data as $key => $value)
+			if ($this->inverseIfNeed($callback($value, $key, $index++), $inverse))
 				$result[] = $value;
+		
+		return new self($result);
+	}
+	
+	public function where($conditions) {
+		$result = [];
+		
+		foreach ($conditions as $key => $value) {
+			list($value, $strict) = is_array($value) ? $value : [$value, false];
+			
+			if ($strict) {
+				if ($this->_data[$key] === $value)
+					$result[$key] = $this->_data[$key];
+			} else {
+				if ($this->_data[$key] == $value)
+					$result[$key] = $this->_data[$key];
+			}
 		}
 		
 		return new self($result);
@@ -153,15 +209,9 @@ class CArray implements Iterator, ArrayAccess {
 		$removedKeys = [];
 		$index = 0;
 		
-		foreach ($this->_data as $key => $value) {
-			$callbackResult = $callback($value, $key, $index++);
-			
-			if ($inverse)
-				$callbackResult = !$callbackResult;
-			
-			if ($callbackResult)
+		foreach ($this->_data as $key => $value)
+			if ($this->inverseIfNeed($callback($value, $key, $index++), $inverse))
 				$removedKeys[] = $key;
-		}
 		
 		foreach ($removedKeys as $key) {
 			unset($this->_data[$key]);
@@ -212,6 +262,21 @@ class CArray implements Iterator, ArrayAccess {
 		
 		$this->_count--;
 		return array_shift($this->_data);
+	}
+	
+	//---------------------------------------------------
+	
+	private function inverseIfNeed($value, $needInverse) {
+		return $needInverse ? !$value : $value;
+	}
+	
+	private function parsePath($path) {
+		$result = is_string($path) ? explode('.', $path) : [];
+		
+		if (empty($result))
+			throw new InvalidArgumentException('path');
+		
+		return $result;
 	}
 }
 
