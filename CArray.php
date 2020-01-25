@@ -1,6 +1,6 @@
 <?php
 
-class CArray implements Iterator, ArrayAccess {
+class CArray implements Iterator, ArrayAccess, Countable {
 	private $_data, $_count;
 	
 	public function __construct($data) {
@@ -8,6 +8,8 @@ class CArray implements Iterator, ArrayAccess {
 			$this->_data = $data;
 		elseif (is_iterable($data))
 			$this->_data = iterator_to_array($data);
+		elseif (is_object($data))
+			$this->_data = get_object_vars($data);
 		else
 			throw new InvalidArgumentException('data has invalid type');
 		
@@ -209,6 +211,13 @@ class CArray implements Iterator, ArrayAccess {
 		return false;
 	}
 	
+	public function each($callback, $recursive = false, $userData = null) {
+        if ($recursive)
+            array_walk_recursive($this->_data, $callback, $userData);
+        else
+            array_walk($this->_data, $callback, $userData);
+    }
+	
 	//---------------------------------------------------
 	
 	public function min() {
@@ -254,6 +263,11 @@ class CArray implements Iterator, ArrayAccess {
 		return new self(array_values($this->_data));
 	}
 	
+	public function flatten() {
+        $it = new \RecursiveIteratorIterator(new \RecursiveArrayIterator($this->_data));
+        return new self($it);
+    }
+	
 	public function reverse($preserveKeys = false) {
 		return new self(array_reverse($this->_data, $preserveKeys));
 	}
@@ -264,6 +278,14 @@ class CArray implements Iterator, ArrayAccess {
 	
 	public function slice($offset = 0, $length = null, $preserveKeys = true) {
 		return new self(array_slice($this->_data, $offset, $length, $preserveKeys));
+	}
+	
+	public function merge(...$arrays) {
+		return new self(array_merge($this->_data, ...$arrays));
+	}
+	
+	public function mergeRecursive(...$arrays) {
+		return new self(array_merge_recursive($this->_data, ...$arrays));
 	}
 	
 	public function filter($callback = null, $inverse = false) {
