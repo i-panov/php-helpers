@@ -212,11 +212,11 @@ class CArray implements Iterator, ArrayAccess, Countable {
 	}
 	
 	public function each($callback, $recursive = false, $userData = null) {
-        if ($recursive)
-            array_walk_recursive($this->_data, $callback, $userData);
-        else
-            array_walk($this->_data, $callback, $userData);
-    }
+		if ($recursive)
+			array_walk_recursive($this->_data, $callback, $userData);
+		else
+			array_walk($this->_data, $callback, $userData);
+	}
 	
 	//---------------------------------------------------
 	
@@ -264,9 +264,9 @@ class CArray implements Iterator, ArrayAccess, Countable {
 	}
 	
 	public function flatten() {
-        $it = new \RecursiveIteratorIterator(new \RecursiveArrayIterator($this->_data));
-        return new self($it);
-    }
+		$it = new \RecursiveIteratorIterator(new \RecursiveArrayIterator($this->_data));
+		return new self($it);
+	}
 	
 	public function reverse($preserveKeys = false) {
 		return new self(array_reverse($this->_data, $preserveKeys));
