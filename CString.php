@@ -130,14 +130,12 @@ class CString implements Iterator, ArrayAccess {
 	public function split($delimiters, $limit = PHP_INT_MAX) {
 		$delimitersLength = strlen($delimiters);
 		
-		if ($delimitersLength === 1)
+		if (is_string($delimiters))
 			$result = explode($delimiters, $this->_value, $limit);
-		elseif ($delimitersLength > 1) {
-			$delimiters = is_array($delimiters) ? $delimiters : str_split($delimiters);
-			$result = str_replace($delimiters, $delimiters[0], $this->_value);
-			$result = explode($delimiters[0], $result, $limit);
-		} else
-			throw new InvalidArgumentException('delimiters is empty');
+		elseif (is_array($delimiters) && !empty($delimiters))
+			$result = explode($delimiters[0], str_replace($delimiters, $delimiters[0], $this->_value), $limit);
+		else
+			throw new InvalidArgumentException('delimiters');
 		
 		return new self($result);
 	}
