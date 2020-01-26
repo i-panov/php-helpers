@@ -396,6 +396,92 @@ class CArray implements Iterator, ArrayAccess, Countable {
 		$this->_count--;
 		return array_shift($this->_data);
 	}
+
+	const SORT_ASC = 1;
+	const SORT_DESC = 2;
+
+	const SORT_NUMERIC = 4;
+	const SORT_STRING = 8;
+	const SORT_LOCALE_STRING = 16;
+	const SORT_NATURAL = 32;
+	const SORT_IGNORE_CASE = 64;
+
+	const SORT_PRESERVE_KEYS = 128;
+	const SORT_BY_KEYS = 256;
+	const SORT_BACK = 512;
+
+	public function sort($flags = null, $comparer = null) {
+		if (empty($flags) || !is_int($flags) || $flags < 0) {
+			if (is_callable($comparer))
+				usort($this->_data);
+			else
+				sort($this->_data);
+			
+			return $this;
+		}
+
+		$flagsMapping = [
+			self::SORT_NUMERIC => SORT_NUMERIC, 
+			self::SORT_STRING => SORT_STRING,
+			self::SORT_LOCALE_STRING => SORT_LOCALE_STRING,
+			self::SORT_NATURAL => SORT_NATURAL,
+			self::SORT_IGNORE_CASE => SORT_FLAG_CASE,
+		];
+
+		$defaultFlags = SORT_REGULAR;
+		
+		foreach ($flagsMapping as $selfFlag => $defaultFlag)
+			if ($flags & $selfFlag)
+				$defaultFlags |= $defaultFlag;
+		
+		if ($flags & self::SORT_ASC) {
+			array_multisort($this->_data, SORT_ASC, $defaultFlags);
+			return $this;
+		}
+
+		if ($flags & self::SORT_DESC) {
+			array_multisort($this->_data, SORT_DESC, $defaultFlags);
+			return $this;
+		}
+
+		if ($flags & self::SORT_BY_KEYS) {
+			if (is_callable($comparer)) {
+				uksort($this->_data, $comparer);
+				return $this;
+			}
+
+			if ($flags & self::SORT_BACK) {
+				krsort($this->_data, $defaultFlags);
+				return $this;
+			}
+
+			ksort($this->_data, $defaultFlags);
+			return $this;
+		}
+
+		if ($flags & self::SORT_PRESERVE_KEYS) {
+			if (is_callable($comparer)) {
+				uasort($this->_data, $comparer);
+				return $this;
+			}
+
+			if ($flags & self::SORT_BACK) {
+				arsort($this->_data, $defaultFlags);
+				return $this;
+			}
+
+			asort($this->_data, $defaultFlags);
+			return $this;
+		}
+
+		if ($flags & self::SORT_BACK) {
+			rsort($this->_data, $defaultFlags);
+			return $this;
+		}
+
+		sort($this->_data, $defaultFlags);
+		return $this;
+	}
 	
 	//---------------------------------------------------
 	
