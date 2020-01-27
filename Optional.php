@@ -1,7 +1,5 @@
 <?php
 
-// implementation of https://docs.oracle.com/javase/8/docs/api/java/util/Optional.html
-
 class Optional {
 	private $_value;
 
@@ -29,30 +27,30 @@ class Optional {
 	}
 
 	public function filter($callback) {
-        $this->requireCallback($callback);
-        
-        if (!$this->isPresent())
-            return $this;
-        
-        return $callback($this->_value) ? $this : static::empty();
+		$this->requireCallback($callback);
+		
+		if (!$this->isPresent())
+			return $this;
+		
+		return $callback($this->_value) ? $this : static::empty();
 	}
 
 	public function flatMap($callback) {
-        $this->requireCallback($callback);
+		$this->requireCallback($callback);
 
-        if (!$this->isPresent())
-            return $this;
+		if (!$this->isPresent())
+			return $this;
 
-        $result = $callback($this->_value);
+		$result = $callback($this->_value);
 
-        if (!($result instanceof self))
-            throw new InvalidArgumentException('callback returns not Optional: ' . var_export($result, true));
-        
-        return $result;
+		if (!($result instanceof self))
+			throw new InvalidArgumentException('callback returns not Optional: ' . var_export($result, true));
+		
+		return $result;
 	}
 
 	public function get() {
-        $this->requirePresent();
+		$this->requirePresent();
 		return $this->_value;
 	}
 
@@ -85,8 +83,8 @@ class Optional {
 	}
 
 	public function orElseThrow() {
-        $this->requirePresent();
-        return $this->_value;
+		$this->requirePresent();
+		return $this->_value;
 	}
 
 	public function __toString() {
@@ -96,10 +94,10 @@ class Optional {
 	private function requireCallback($callback) {
 		if (!is_callable($callback))
 			throw new InvalidArgumentException('callback is not callable: ' . var_export($callback, true));
-    }
-    
-    private function requirePresent() {
-        if (!$this->isPresent())
-            throw new BadMethodCallException('value is not present');
-    }
+	}
+	
+	private function requirePresent() {
+		if (!$this->isPresent())
+			throw new BadMethodCallException('value is not present');
+	}
 }
