@@ -1,5 +1,7 @@
 <?php
 
+// implementation of https://docs.oracle.com/javase/8/docs/api/java/util/Optional.html
+
 class Optional {
 	private $_value;
 
