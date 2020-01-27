@@ -51,6 +51,9 @@ class CArray implements Iterator, ArrayAccess, Countable {
 	//---------------------------------------------------
 
 	public function offsetSet($offset, $value) {
+		if (is_int($offset) && $offset >= $this->_count)
+			throw new OutOfBoundsException("offset: $offset");
+		
 		if (is_null($offset))
 			$this->_data[] = $value;
 		else
@@ -153,16 +156,13 @@ class CArray implements Iterator, ArrayAccess, Countable {
 	}
 	
 	public function first() {
-		foreach ($this->_data as $key => $value)
-			return $key;
-		
-		return null;
+		$key = $this->firstKey();
+		return !is_null($key) ? $this->_data[$key] : null;
 	}
 	
 	public function last() {
-		$result = end($this->_data);
-		reset($this->_data);
-		return $result;
+		$key = $this->lastKey();
+		return !is_null($key) ? $this->_data[$key] : null;
 	}
 	
 	public function search($callbackOrValue, $inverseOrStrict = false) {
