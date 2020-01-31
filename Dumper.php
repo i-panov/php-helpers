@@ -50,6 +50,10 @@ class Dumper {
 		static::dumpInternal($objects, 'serialize');
 	}
 	
+	public static function dumpConsole($object) {
+		echo '<script class="dump">console.log(' . json_encode($object) . ')</script>';
+	}
+	
 	public static function log(...$objects) {
 		$header = static::getHeader();
 		$content = "# $header" . PHP_EOL . implode(PHP_EOL . PHP_EOL, array_map(['Dumper', 'json'], $objects)) . PHP_EOL;
