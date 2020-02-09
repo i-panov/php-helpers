@@ -1,6 +1,6 @@
 <?php
 
-class CString implements Iterator, ArrayAccess {
+class CString implements Iterator, ArrayAccess, Countable {
 	private $_value, $_length;
 	
 	public function __construct($value) {
@@ -70,6 +70,12 @@ class CString implements Iterator, ArrayAccess {
 	}
 
 	//---------------------------------------------------
+	
+	public function count() {
+		return $this->_length;
+	}
+	
+	//---------------------------------------------------
 
 	public function length() {
 		return $this->_length;
@@ -88,7 +94,8 @@ class CString implements Iterator, ArrayAccess {
 	}
 
 	public function endsWith($search) {
-		return strpos($this->_value, $search) === (strlen($this->_value) - strlen($search));
+		$len = strlen($search);
+		return strpos($this->_value, $search, -$len) === ($this->_length - $len);
 	}
 	
 	public function indexOf($search, $offset = 0, $ignoreCase = false) {
