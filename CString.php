@@ -84,11 +84,11 @@ class CString implements Iterator, ArrayAccess {
 	}
 
 	public function startsWith($search) {
-		return substr($this->_value, 0, strlen($search)) == $search;
+		return strpos($this->_value, $search) === 0;
 	}
 
 	public function endsWith($search) {
-		return substr($this->_value, $this->_length - strlen($search)) == $search;
+		return strpos($this->_value, $search) === (strlen($this->_value) - strlen($search));
 	}
 	
 	public function indexOf($search, $offset = 0, $ignoreCase = false) {
