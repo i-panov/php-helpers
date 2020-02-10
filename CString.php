@@ -144,7 +144,7 @@ class CString implements Iterator, ArrayAccess, Countable {
 		else
 			throw new InvalidArgumentException('delimiters');
 		
-		return new self($result);
+		return array_map(['static', 'of'], $result);
 	}
 	
 	public function slice($offset, $length = false) {
